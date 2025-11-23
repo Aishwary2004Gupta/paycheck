@@ -1,0 +1,58 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo:6
+    container_name: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  auth-service:
+    build: ./services/auth-service
+    container_name: auth-service
+    ports:
+      - "4001:4001"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/paycheck
+      - JWT_SECRET=super-secret-key
+    depends_on:
+      - mongo
+
+  transaction-service:
+    build: ./services/transaction-service
+    container_name: transaction-service
+    ports:
+      - "4002:4002"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/paycheck
+      - JWT_SECRET=super-secret-key
+      - LEDGER_SERVICE_URL=http://ledger-service:4003
+    depends_on:
+      - mongo
+      - ledger-service
+
+  ledger-service:
+    build: ./services/ledger-service
+    container_name: ledger-service
+    ports:
+      - "4003:4003"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/paycheck
+    depends_on:
+      - mongo
+
+  ui:
+    build: ./ui
+    container_name: paycheck-ui
+    ports:
+      - "3000:3000"
+    depends_on:
+      - auth-service
+      - transaction-service
+      - ledger-service
+
+volumes:
+  mongo-data:
