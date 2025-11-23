@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>PayCheck UI</title>
+  </head>
+  <body>
+    <h1>PayCheck Demo</h1>
+
+    <section>
+      <h2>Register</h2>
+      <input id="regEmail" placeholder="Email" />
+      <input id="regPassword" type="password" placeholder="Password" />
+      <button id="registerBtn">Register</button>
+      <p id="registerStatus"></p>
+    </section>
+
+    <section>
+      <h2>Login</h2>
+      <input id="email" placeholder="Email" />
+      <input id="password" type="password" placeholder="Password" />
+      <button id="loginBtn">Login</button>
+      <p id="loginStatus"></p>
+    </section>
+
+    <section>
+      <h2>Make Payment</h2>
+      <input id="amount" type="number" placeholder="Amount" />
+      <button id="payBtn">Pay</button>
+      <p id="payStatus"></p>
+    </section>
+
+    <script>
+      let token = null;
+
+      const authBase = "http://localhost:4001/api/auth";
+      const txBase = "http://localhost:4002/api/transactions";
+
+      document.getElementById("registerBtn").onclick = async () => {
+        const email = document.getElementById("regEmail").value;
+        const password = document.getElementById("regPassword").value;
+        const res = await fetch(`${authBase}/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        document.getElementById("registerStatus").innerText =
+          (res.ok ? "OK: " : "ERR: ") + (data.message || res.status);
+      };
+
+      document.getElementById("loginBtn").onclick = async () => {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        const res = await fetch(`${authBase}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          token = data.token;
+          document.getElementById("loginStatus").innerText = "Logged in";
+        } else {
+          document.getElementById("loginStatus").innerText =
+            "Login failed: " + (data.message || res.status);
+        }
+      };
+
+      document.getElementById("payBtn").onclick = async () => {
+        if (!token) {
+          document.getElementById("payStatus").innerText =
+            "Please login first";
+          return;
+        }
+        const amount = Number(document.getElementById("amount").value || 0);
+        const res = await fetch(txBase, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token
+          },
+          body: JSON.stringify({ amount })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          document.getElementById("payStatus").innerText =
+            "Payment SUCCESS: " + data._id;
+        } else {
+          document.getElementById("payStatus").innerText =
+            "Payment FAILED: " + (data.message || res.status);
+        }
+      };
+    </script>
+  </body>
+</html>
