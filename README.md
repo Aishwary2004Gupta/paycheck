@@ -4,7 +4,9 @@ Such as: 👇
 - transactions
 - services
 - bank details
-- amount available 
+- amount available
+- offers
+
 
 
 
